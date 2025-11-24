@@ -41,7 +41,7 @@ def get_response_content():
     
     return content
 
-def streaming_data_generator(content):
+async def streaming_data_generator(content):
     """Generate a streaming response with the given content"""
     response_id = uuid.uuid4().hex
     words = content.split(" ")
@@ -55,13 +55,13 @@ def streaming_data_generator(content):
             "choices": [{"index": 0, "delta": {"content": word}}],
         }
         sleep_time = os.environ.get("SLEEP_TIME", "0.1")
-        time.sleep(float(sleep_time))
+        await asyncio.sleep(float(sleep_time))
         yield f"data: {json.dumps(chunk)}\n\n"
 
     # return usage stats
     yield (
     "data: "
-    f'{{"id": "fake-id", "object": "chat.completion.chunk", "choices": [], '
+    f'{{"id": "fake-id", "object": "chat.completion", "choices": [], '
     f'"usage": {{"prompt_tokens": {TOKEN_COUNT}, '
     f'"completion_tokens": {TOKEN_COUNT}, '
     f'"total_tokens": {TOKEN_COUNT}}}}}\n\n'
