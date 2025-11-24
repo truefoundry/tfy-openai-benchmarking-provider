@@ -61,8 +61,9 @@ def streaming_data_generator(content):
     # return usage stats
     yield (
     "data: "
-    f'{{"id": "fake-id", "object": "chat.completion", '
+    f'{{"id": "fake-id", "object": "chat.completion.chunk", '
     f'"usage": {{"prompt_tokens": {TOKEN_COUNT}, '
+    f'"choices": [], '
     f'"completion_tokens": {TOKEN_COUNT}, '
     f'"total_tokens": {TOKEN_COUNT}}}}}\n\n'
     )    
