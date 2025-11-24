@@ -57,7 +57,15 @@ def streaming_data_generator(content):
         sleep_time = os.environ.get("SLEEP_TIME", "0.1")
         time.sleep(float(sleep_time))
         yield f"data: {json.dumps(chunk)}\n\n"
-    
+
+    # return usage stats
+    yield (
+    "data: "
+    f'{{"id": "fake-id", "object": "chat.completion", '
+    f'"usage": {{"prompt_tokens": {TOKEN_COUNT}, '
+    f'"completion_tokens": {TOKEN_COUNT}, '
+    f'"total_tokens": {TOKEN_COUNT}}}}}\n\n'
+    )    
     yield f"data: [DONE]\n\n"
 
 # Chat completions endpoint supporting both OpenAI and Azure formats
