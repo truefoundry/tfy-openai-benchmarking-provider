@@ -54,8 +54,7 @@ def streaming_data_generator(content):
             "model": "gpt-3.5-turbo",
             "choices": [{"index": 0, "delta": {"content": word}}],
         }
-        import time
-        sleep_time = os.environ.get("SLEEP_TIME", "0.01")
+        sleep_time = os.environ.get("SLEEP_TIME", "0.1")
         time.sleep(float(sleep_time))
         yield f"data: {json.dumps(chunk)}\n\n"
     
