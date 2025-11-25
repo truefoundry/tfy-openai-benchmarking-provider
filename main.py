@@ -58,10 +58,37 @@ async def streaming_data_generator(content):
         await asyncio.sleep(float(sleep_time))
         yield f"data: {json.dumps(chunk)}\n\n"
 
+    # # return usage stats
+    # yield (
+    # "data: "
+    # f'{{"id": "fake-id", "object": "chat.completion", "choices": [], '
+    # f'"usage": {{"prompt_tokens": {TOKEN_COUNT}, '
+    # f'"completion_tokens": {TOKEN_COUNT}, '
+    # f'"total_tokens": {TOKEN_COUNT}}}}}\n\n'
+    # )    
+    yield f"data: [DONE]\n\n"
+
+async def streaming_text_generator(content):
+    """Generate a streaming response for text completions"""
+    response_id = uuid.uuid4().hex
+    words = content.split(" ")
+    for word in words:
+        word = word + " "
+        chunk = {
+            "id": f"cmpl-{response_id}",
+            "object": "text_completion",
+            "created": int(time.time()),
+            "model": "gpt-3.5-turbo-instruct",
+            "choices": [{"index": 0, "text": word, "logprobs": None, "finish_reason": None}],
+        }
+        sleep_time = os.environ.get("SLEEP_TIME", "0.1")
+        await asyncio.sleep(float(sleep_time))
+        yield f"data: {json.dumps(chunk)}\n\n"
+
     # return usage stats
     yield (
     "data: "
-    f'{{"id": "fake-id", "object": "chat.completion", "choices": [], '
+    f'{{"id": "fake-id", "object": "text_completion", "choices": [], '
     f'"usage": {{"prompt_tokens": {TOKEN_COUNT}, '
     f'"completion_tokens": {TOKEN_COUNT}, '
     f'"total_tokens": {TOKEN_COUNT}}}}}\n\n'
@@ -102,6 +129,48 @@ async def completion(request: Request, model: str = None):
                         "role": "assistant",
                         "content": content,
                     },
+                    "logprobs": None,
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {
+                "prompt_tokens": 10,
+                "completion_tokens": TOKEN_COUNT,
+                "total_tokens": 10 + TOKEN_COUNT
+            },
+        }
+        return response
+
+# Text completions endpoint supporting both OpenAI and Azure formats
+@app.post("/completions")
+@app.post("/v1/completions")
+@app.post("/openai/deployments/{model:path}/completions")  # azure compatible endpoint
+async def text_completion(request: Request, model: str = None):
+    data = await request.json()
+    requested_model = data.get("model") or model or "gpt-3.5-turbo-instruct"
+    
+    # add latency if configured
+    if LATENCY > 0:
+        await asyncio.sleep(LATENCY)
+    
+    content = get_response_content()
+    
+    if data.get("stream") == True:
+        return StreamingResponse(
+            content=streaming_text_generator(content),
+            media_type="text/event-stream",
+        )
+    else:
+        response_id = uuid.uuid4().hex
+        response = {
+            "id": f"cmpl-{response_id}",
+            "object": "text_completion",
+            "created": int(time.time()),
+            "model": requested_model,
+            "choices": [
+                {
+                    "index": 0,
+                    "text": content,
                     "logprobs": None,
                     "finish_reason": "stop",
                 }
