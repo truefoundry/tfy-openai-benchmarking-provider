@@ -65,7 +65,7 @@ def streaming_data_generator(content):
 @app.post("/v1/chat/completions")
 @app.post("/openai/deployments/{model:path}/chat/completions")  # azure compatible endpoint
 async def completion(request: Request, model: str = None):
-    data = await request.json()
+    data = request.query_params
     requested_model = data.get("model") or model or "gpt-3.5-turbo"
     
     # add latency if configured
@@ -73,8 +73,7 @@ async def completion(request: Request, model: str = None):
         await asyncio.sleep(LATENCY)
     
     content = get_response_content()
-    
-    if data.get("stream") == True:
+    if data.get("stream") == "true":
         return StreamingResponse(
             content=streaming_data_generator(content),
             media_type="text/event-stream",
