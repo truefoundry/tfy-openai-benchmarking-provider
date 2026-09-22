@@ -64,7 +64,7 @@ def streaming_data_generator(content):
 @app.post("/chat/completions")
 @app.post("/v1/chat/completions")
 @app.post("/openai/deployments/{model:path}/chat/completions")  # azure compatible endpoint
-async def completion(request: Request, model: str = None):
+async def completion(request: Request, model: str = None, stream: bool = False):
     data = request.query_params
     requested_model = data.get("model") or model or "gpt-3.5-turbo"
     
